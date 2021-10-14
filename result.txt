@@ -1,0 +1,2 @@
+To process a list of images data/train.txt and save results of detection to result.json file use: darknet.exe detector test cfg/coco.data cfg/yolov4.cfg yolov4.weights -ext_output -dont_show -out result.json < data/train.txt
+To process a list of images data/train.txt and save results of detection to result.txt use: darknet.exe detector test cfg/coco.data cfg/yolov4.cfg yolov4.weights -dont_show -ext_output < data/train.txt > result.txt
