@@ -1,7 +1,7 @@
 from app.service.load import init_color_ref, init_shape_ref, init_text_ref
 
 
-class Prediction:
+class PredictionService:
     def __init__(self):
         ''' only initialized with 'front' property
         initializes 4 references
