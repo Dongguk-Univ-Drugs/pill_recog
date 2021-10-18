@@ -3,12 +3,14 @@ from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile
 
-from app.service.prediction_service import PredictionService
+from service.prediction_service import PredictionService
+
+
 # from darknet import darknet_images
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMAGE_DIR = os.path.join(BASE_DIR, "/static/image")
-SERVER_IAMGE_DIR = os.path.join('http:localhost:8000', "/static/image")
+SERVER_IMAGE_DIR = os.path.join('http:localhost:8000', "/static/image")
 
 # init Prediction class
 ps = PredictionService()
@@ -29,7 +31,10 @@ def read_item(item_id: int, q: Optional[str] = None):
 # file upload
 @app.post("/file/")
 async def upload_img(file: UploadFile = File(...)):
-    return {"filename": file.filename}
+    # convert `UploadFile` to `numpy.ndarray`
+    input_byte_img = await file.read()
+    text_result_list = ps.get_text(input_byte_img)
+    return { 'result': text_result_list }
 
 
 # @app.get("/test_darknet")
