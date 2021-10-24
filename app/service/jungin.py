@@ -170,14 +170,14 @@ def getPillContour(src):
 
     return src
 
-
+# 노이즈 제거
 def closing(src):
     kernel = np.ones((3, 3), np.uint8)
     result = cv2.dilate(src, kernel)
     result = cv2.erode(result, kernel)
     return result
 
-
+# 노이즈 제거
 def opening(src):
     kernel = np.ones((3, 3), np.uint8)
     result = cv2.erode(src, kernel)
@@ -244,6 +244,7 @@ if __name__ == "__main__":
     foreground = getPillContour(image)
     cv2.imshow("foreground", foreground)
     gray_foreground = cv2.cvtColor(foreground, cv2.COLOR_BGR2GRAY)
+    # ----------------------------------------
     clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8, 8))
     clahe_foreground = clahe.apply(gray_foreground)
     ret, img_threshold = cv2.threshold(
@@ -251,7 +252,7 @@ if __name__ == "__main__":
 
     closing_image = closing(img_threshold)
     boundR = cv2.boundingRect(closing_image)
-
+    # ----------------------------------------
     canny = cv2.Canny(gray_foreground, 40, 150)
     ret, thresh = cv2.threshold(canny, 100, 255, cv2.THRESH_BINARY)
 
