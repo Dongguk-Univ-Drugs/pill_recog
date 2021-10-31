@@ -90,7 +90,8 @@ class Preprocessing:
 
     #thresholding
     def thresholding(self, image):
-        return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        return cv2.threshold(image, 0, 255,
+                             cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
         # return cv2.threshold(image, 110, 255, cv2.THRESH_BINARY)[1]
 
     #dilation
@@ -128,3 +129,21 @@ class Preprocessing:
                                  flags=cv2.INTER_CUBIC,
                                  borderMode=cv2.BORDER_REPLICATE)
         return rotated
+
+    def get_color(src, low, high, color, color_arr):
+        src_hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
+
+        src_hsv = cv2.inRange(src_hsv, low, high)
+
+        # 필요하면 주석 제거
+        # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8,8))
+        # mask = cv2.dilate(src_hsv, kernel)
+        # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8,8))
+        # mask = cv2.erode(mask, kernel)
+
+        contours, hierarchy = cv2.findContours(src_hsv, cv2.RETR_LIST,
+                                               cv2.CHAIN_APPROX_NONE)
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area > 20000 and area < 40000:
+                color_arr.append(color)
