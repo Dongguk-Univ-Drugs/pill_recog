@@ -1,4 +1,5 @@
 import csv
+import os
 
 
 class Reference:
@@ -13,12 +14,12 @@ class Reference:
         
         - color, shape, text
         """
-        self.color = self.init_color_ref
-        self.shape = self.init_shape_ref
-        self.text = self.init_text_ref
-        
-    
-    def init_color_ref():
+        self.dataset = f'{os.getcwd()}/dataset'
+        self.color = self.init_color_ref()
+        self.shape = self.init_shape_ref()
+        self.text = self.init_text_ref()
+
+    def init_color_ref(self):
         '''initializes the color reference what will be used via `self`
                 - keys are named for the groups in numbers
                 - values are made up of `set()`s
@@ -45,8 +46,9 @@ class Reference:
         define_white = ['하양']
 
         # read file
-        with open('../dataset/color_reference.csv', newline='',
-                encoding='utf-8') as f:
+        with open(os.path.join(self.dataset, 'color_reference.csv'),
+                  newline='',
+                  encoding='utf-8') as f:
             reader = csv.reader(f)
             lines = list(reader)
             # distribute into groups
@@ -66,8 +68,7 @@ class Reference:
             5: whitenary
         }
 
-
-    def init_shape_ref():
+    def init_shape_ref(self):
         '''initializes the shape reference what will be used via `self`
                 - keys are named of up [ cirlce, oval, triangle, square, rhombus, pentagon, hexagon, octagon, stadium, semicircle ] 
                 - values are `set()`s of each key
@@ -88,8 +89,9 @@ class Reference:
         semicircle = set()
 
         # read file
-        with open('../dataset/shape_reference.csv', newline='',
-                encoding='utf-8') as f:
+        with open(os.path.join(self.dataset, 'shape_reference.csv'),
+                  newline='',
+                  encoding='utf-8') as f:
             reader = csv.reader(f)
             lines = list(reader)
             # distribute items
@@ -119,8 +121,7 @@ class Reference:
             'semicircle': semicircle
         }
 
-
-    def init_text_ref():
+    def init_text_ref(self) -> dict:
         '''initializes the text reference what will be used via `self`
 
             ---
@@ -132,13 +133,16 @@ class Reference:
         # saves the front text for key and pid for value
         result_dict = {}
         # read file
-        with open('../dataset/text_reference.csv', newline='',
-                encoding='utf-8') as f:
+        with open(os.path.join(self.dataset, 'text_reference.csv'),
+                  newline='',
+                  encoding='utf-8') as f:
             reader = csv.reader(f)
             lines = list(reader)
             # make it into dict
             for line in lines:
                 pid, front_text = line[0], line[1]
+                front_text = front_text.replace('마크', '').replace('분할선',
+                                                                  '').upper()
                 # the front_text cannot be in dict
                 if front_text not in result_dict:
                     result_dict[front_text] = set()
