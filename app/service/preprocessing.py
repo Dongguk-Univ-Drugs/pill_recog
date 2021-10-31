@@ -130,16 +130,16 @@ class Preprocessing:
                                  borderMode=cv2.BORDER_REPLICATE)
         return rotated
 
-    def get_color(src, low, high, color, color_arr):
+    def get_color(self, src, low, high, color, color_arr):
         src_hsv = cv2.cvtColor(src, cv2.COLOR_BGR2HSV)
 
         src_hsv = cv2.inRange(src_hsv, low, high)
 
         # 필요하면 주석 제거
-        # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8,8))
-        # mask = cv2.dilate(src_hsv, kernel)
-        # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8,8))
-        # mask = cv2.erode(mask, kernel)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8,8))
+        mask = cv2.dilate(src_hsv, kernel)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8,8))
+        mask = cv2.erode(mask, kernel)
 
         contours, hierarchy = cv2.findContours(src_hsv, cv2.RETR_LIST,
                                                cv2.CHAIN_APPROX_NONE)
