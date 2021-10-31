@@ -5,7 +5,6 @@ from fastapi import FastAPI, File, UploadFile
 
 from service.prediction_service import PredictionService
 
-
 # from darknet import darknet_images
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -34,7 +33,8 @@ async def upload_img(file: UploadFile = File(...)):
     # convert `UploadFile` to `numpy.ndarray`
     input_byte_img = await file.read()
     text_result_list = ps.get_text(input_byte_img)
-    return { 'result': text_result_list }
+    color_result_list = ps.get_color_group(input_byte_img)
+    return {'result': {'text': text_result_list, 'color': color_result_list}}
 
 
 # @app.get("/test_darknet")

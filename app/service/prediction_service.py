@@ -3,9 +3,9 @@ import cv2
 from service.load import Reference
 from service.preprocessing import Preprocessing
 
-# use Tesseract
-import pytesseract
-from pytesseract import Output
+# use EasyOCR
+import easyocr
+
 
 # TODO; has to be Singleton
 class PredictionService:
@@ -23,7 +23,29 @@ class PredictionService:
         Args:
             img (numpy.ndarray): result data from Preprocessing.get_foreground
         """
-        pass
+        redLow = (0, 60, 80)
+        redHigh = (45, 255, 255)
+        greenLow = (45, 15, 10)
+        greenHigh = (80, 255, 255)
+        blueLow = (90, 60, 70)
+        blueHigh = (115, 255, 255)
+        blackLow = (0, 0, 0)
+        blackHigh = (180, 255, 40)
+        whiteLow = (0, 0, 220)
+        whiteHigh = (180, 40, 255)
+
+        pp = self.preprocess
+        src = pp.create_cv2_mode(img)
+
+        # 색상
+        color_arr = []
+        pp.get_color(src, redLow, redHigh, "Red", color_arr)
+        pp.get_color(src, greenLow, greenHigh, "Green", color_arr)
+        pp.get_color(src, blueLow, blueHigh, "Blue", color_arr)
+        pp.get_color(src, blackLow, blackHigh, "Black", color_arr)
+        pp.get_color(src, whiteLow, whiteHigh, "White", color_arr)
+        
+        return color_arr
 
     def get_shape(self, img):
         '''
@@ -45,41 +67,47 @@ class PredictionService:
             opt (int): the option will take whether to change the origin data to what
         """
         pp = self.preprocess
-        # # get img converted to cv2 mode
+        ref = self.ref
+        # get img converted to cv2 mode
         converted_img = pp.create_cv2_mode(img)
-        # # get preprocessed img from preprocessing
-        # foreground_img = pp.get_foreground(converted_img)
-        # preprocessed_img = pp.create_img_for_text_recognition(foreground_img)
-        gray_scaled_img = pp.get_grayscale(converted_img)
-        # dilated_img = pp.dilate(gray_scaled_img)
-        thresholding_img = pp.thresholding(gray_scaled_img)
-        # use Tesseract to recognize the text
-        """pytesseract controls
-        --oem : OCR Engine modes:
-        0    Legacy engine only.
-        1    Neural nets LSTM engine only.
-        2    Legacy + LSTM engines.
-        3    Default, based on what is available.
-        
-        --psm : Page Segmentation modes:
-        0    Orientation and script detection (OSD) only.
-        1    Automatic page segmentation with OSD.
-        2    Automatic page segmentation, but no OSD, or OCR.
-        3    Fully automatic page segmentation, but no OSD. (Default)
-        4    Assume a single column of text of variable sizes.
-        5    Assume a single uniform block of vertically aligned text.
-        6    Assume a single uniform block of text.
-        7    Treat the image as a single text line.
-        8    Treat the image as a single word.
-        9    Treat the image as a single word in a circle.
-        10    Treat the image as a single character.
-        11    Sparse text. Find as much text as possible in no particular order.
-        12    Sparse text with OSD.
-        13    Raw line. Treat the image as a single text line,
-            bypassing hacks that are Tesseract-specific.
-        """
-        
-        text_recog_result = pytesseract.image_to_data(thresholding_img,
-                                                      output_type=Output.DICT,
-                                                      config='--oem 1 --psm 7')
-        return text_recog_result['text']
+        reader = easyocr.Reader(['en'], gpu=False)
+        results = reader.readtext(converted_img)
+
+        def clean_text(text):
+            return "".join([c if ord(c) < 128 else "" for c in text]).strip()
+
+        text_recog_result = ''
+        for bbox, text, prob in results:
+            text_recog_result += clean_text(text) + ' '
+        text_recog_result = text_recog_result.strip()
+
+        similars = [
+            ['1', 'I', 'J'],
+            ['5', 'S'],
+            ['D', '0', 'O', 'Q'],
+        ]
+
+        def remove_exceptions(text):
+            result = ''
+            for t in text:
+                if t == '(': result += 'C'
+                elif t == ']': result += 'J'
+                else: result += t
+            return result
+
+        # check in text ref
+        text_set = set()
+        temp = remove_exceptions(text_recog_result)
+
+        candidates = set()
+
+        for similar in similars:
+            for i in range(len(temp)):
+                if temp[i] in similar:
+                    for s in similar:
+                        candidates.add(''.join(temp[:i] + s + temp[i + 1:]))
+        for candidate in candidates:
+            if candidate in ref.text:
+                text_set = text_set.union(ref.text[candidate])
+
+        return list(text_set)
