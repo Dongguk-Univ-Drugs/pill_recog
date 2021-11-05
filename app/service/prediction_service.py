@@ -1,4 +1,5 @@
 # custom path
+import asyncio
 import cv2
 from service.load import Reference
 from service.preprocessing import Preprocessing
@@ -17,7 +18,7 @@ class PredictionService:
         self.ref = Reference()
         self.preprocess = Preprocessing()
 
-    def get_color_group(self, img):
+    async def get_color_group(self, img):
         """use Foreground of image to distribute the group of color
 
         Args:
@@ -44,7 +45,7 @@ class PredictionService:
         pp.get_color(src, blueLow, blueHigh, "Blue", color_arr)
         pp.get_color(src, blackLow, blackHigh, "Black", color_arr)
         pp.get_color(src, whiteLow, whiteHigh, "White", color_arr)
-        
+
         return color_arr
 
     def get_shape(self, img):
@@ -59,7 +60,7 @@ class PredictionService:
         '''
         pass
 
-    def get_text(self, img):
+    async def get_text(self, img):
         """get option from user and return value by its option
 
         Args:
@@ -81,12 +82,6 @@ class PredictionService:
             text_recog_result += clean_text(text) + ' '
         text_recog_result = text_recog_result.strip()
 
-        similars = [
-            ['1', 'I', 'J'],
-            ['5', 'S'],
-            ['D', '0', 'O', 'Q'],
-        ]
-
         def remove_exceptions(text):
             result = ''
             for t in text:
@@ -98,14 +93,25 @@ class PredictionService:
         # check in text ref
         text_set = set()
         temp = remove_exceptions(text_recog_result)
+        print(temp)
 
         candidates = set()
+        similars = [['1', 'I', 'J'], ['5', 'S'], ['D', '0', 'O', 'Q'],
+                    ['4', 'A'], ['2', '-']]
 
-        for similar in similars:
-            for i in range(len(temp)):
-                if temp[i] in similar:
+        def get_candidates(text, i, similars, candidates):
+            if i == len(text): return
+            print(i, candidates)
+            for similar in similars:
+                if text[i] in similar:
                     for s in similar:
-                        candidates.add(''.join(temp[:i] + s + temp[i + 1:]))
+                        converted = ''.join(text[:i] + s + text[i + 1:])
+                        candidates.add(converted)
+                        get_candidates(converted, i + 1, similars, candidates)
+                get_candidates(text, i + 1, similars, candidates)
+
+        get_candidates(temp, 0, similars, candidates)
+        print(candidates)
         for candidate in candidates:
             if candidate in ref.text:
                 text_set = text_set.union(ref.text[candidate])
