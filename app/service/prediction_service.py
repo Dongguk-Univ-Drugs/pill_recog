@@ -93,7 +93,6 @@ class PredictionService:
         # check in text ref
         text_set = set()
         temp = remove_exceptions(text_recog_result)
-        print(temp)
 
         candidates = set()
         similars = [['1', 'I', 'J'], ['5', 'S'], ['D', '0', 'O', 'Q'],
@@ -101,7 +100,6 @@ class PredictionService:
 
         def get_candidates(text, i, similars, candidates):
             if i == len(text): return
-            print(i, candidates)
             for similar in similars:
                 if text[i] in similar:
                     for s in similar:
@@ -111,7 +109,7 @@ class PredictionService:
                 get_candidates(text, i + 1, similars, candidates)
 
         get_candidates(temp, 0, similars, candidates)
-        print(candidates)
+        
         for candidate in candidates:
             if candidate in ref.text:
                 text_set = text_set.union(ref.text[candidate])
