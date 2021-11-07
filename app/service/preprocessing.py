@@ -145,5 +145,7 @@ class Preprocessing:
                                                cv2.CHAIN_APPROX_NONE)
         for cnt in contours:
             area = cv2.contourArea(cnt)
-            if area > 20000 and area < 40000:
+            # TODO: set numbers -> pixel by pixel
+            if 4000 < area:
                 color_arr.append(color)
+        print(color_arr)
