@@ -27,19 +27,19 @@ class Reference:
             Returns:
                 dict:
 
-                1: yellownary set ⇒ [[0, 60, 80], [45, 255, 255]]
+                1: rednary set ⇒ [[0, 60, 80], [45, 255, 255]]
                 2: grennary set ⇒ [[45, 15, 10], [80, 255, 255]]
                 3: bluenary set ⇒ [[90, 60, 70], [115, 255, 255]]
                 4: blacknary set ⇒ [[0, 0, 0], [180, 255, 40]]
                 5: whitenary set ⇒ [[0, 0, 0], [180, 15, 255]]
             '''
-        yellownary = set()
+        rednary = set()
         greenary = set()
         bluenary = set()
         blacknary = set()
         whitenary = set()
 
-        define_yellow = ['노랑', '분홍', '주황', '갈색', '빨강']
+        define_red = ['노랑', '분홍', '주황', '갈색', '빨강']
         define_green = ['연두', '초록']
         define_blue = ['보라', '파랑', '자주']
         define_black = ['검정', '회색']
@@ -54,18 +54,18 @@ class Reference:
             # distribute into groups
             for line in lines[1:]:
                 pid, color = line[0], line[1]
-                if color in define_yellow: yellownary.add(pid)
+                if color in define_red: rednary.add(pid)
                 elif color in define_green: greenary.add(pid)
                 elif color in define_blue: bluenary.add(pid)
                 elif color in define_black: blacknary.add(pid)
                 elif color in define_white: whitenary.add(pid)
 
         return {
-            1: yellownary,
-            2: greenary,
-            3: bluenary,
-            4: blacknary,
-            5: whitenary
+            'Red': rednary,
+            'Green': greenary,
+            'Blue': bluenary,
+            'Black': blacknary,
+            'White': whitenary
         }
 
     def init_shape_ref(self):
