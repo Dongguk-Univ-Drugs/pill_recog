@@ -46,7 +46,11 @@ class PredictionService:
         pp.get_color(src, blackLow, blackHigh, "Black", color_arr)
         pp.get_color(src, whiteLow, whiteHigh, "White", color_arr)
 
-        return color_arr
+        # get pids from reference
+        result = set()
+        for key in color_arr:
+            result.update(self.ref.color[key])
+        return result
 
     def get_shape(self, img):
         '''
@@ -114,4 +118,4 @@ class PredictionService:
             if candidate in ref.text:
                 text_set = text_set.union(ref.text[candidate])
 
-        return list(text_set)
+        return set(text_set)
