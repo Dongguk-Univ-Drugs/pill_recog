@@ -40,11 +40,16 @@ async def upload_img(file: UploadFile = File(...)):
     color = await color_task
     recog_result = text & color
     end = time()
-
+    # make result
+    result = []
     base_URL = 'https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetail?itemSeq='
+    for code in recog_result:
+        temp = ps.ref.total[code]
+        temp['webviewURL'] = base_URL + code
+        result.append(temp)
 
     return {
-        'result': [base_URL + code for code in recog_result] if len(recog_result) > 0 else '',
+        'result': result,
         'time': f'{end - start}s'
     }
 
