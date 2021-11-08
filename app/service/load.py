@@ -18,6 +18,7 @@ class Reference:
         self.color = self.init_color_ref()
         self.shape = self.init_shape_ref()
         self.text = self.init_text_ref()
+        self.total = self.init_total_ref()
 
     def init_color_ref(self):
         '''initializes the color reference what will be used via `self`
@@ -148,4 +149,22 @@ class Reference:
                     result_dict[front_text] = set()
                 result_dict[front_text].add(pid)
 
+        return result_dict
+
+    def init_total_ref(self) -> dict:
+        # saves [pid, name, manufacturer, preview_image]
+        result_dict = {}
+        # read file
+        with open(os.path.join(self.dataset, 'total_reference.csv'),
+                  newline='',
+                  encoding='utf-8') as f:
+            reader = csv.reader(f)
+            lines = list(reader)
+            # put into result_dict
+            for pid, name, manufacturer, preview_image in lines:
+                result_dict[pid] = {
+                    'name': name,
+                    'manufacturer': manufacturer,
+                    'imageURL': preview_image
+                }
         return result_dict
