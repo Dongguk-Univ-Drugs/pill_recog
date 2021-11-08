@@ -1,4 +1,3 @@
-import concurrent
 import os
 from typing import Optional
 
@@ -39,12 +38,13 @@ async def upload_img(file: UploadFile = File(...)):
     color_task = asyncio.create_task(ps.get_color_group(input_byte_img))
     text = await text_task
     color = await color_task
+    recog_result = text & color
     end = time()
 
     base_URL = 'https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetail?itemSeq='
 
     return {
-        'result': [base_URL + code for code in text] if len(text) > 0 else '',
+        'result': [base_URL + code for code in recog_result] if len(recog_result) > 0 else '',
         'time': f'{end - start}s'
     }
 
