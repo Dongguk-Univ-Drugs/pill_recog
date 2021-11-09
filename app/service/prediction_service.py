@@ -97,10 +97,11 @@ class PredictionService:
         # check in text ref
         text_set = set()
         temp = remove_exceptions(text_recog_result)
+        print(temp)
 
         candidates = set()
         similars = [['1', 'I', 'J'], ['5', 'S'], ['D', '0', 'O', 'Q'],
-                    ['4', 'A'], ['2', '-']]
+                    ['4', 'A'], ['2', '-'], ['Y', 'V']]
 
         def get_candidates(text, i, similars, candidates):
             if i == len(text): return
