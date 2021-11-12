@@ -38,7 +38,6 @@ async def upload_img(file: UploadFile = File(...)):
     start = time()
     # init Prediction class
     ps = PredictionService(input_byte_img, True)
-    ps.preprocessing()
     result = ps.get_prediction()
     end = time()
     # make result

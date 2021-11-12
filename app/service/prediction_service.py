@@ -42,6 +42,7 @@ class PredictionService:
         return src
 
     def get_prediction(self):
+        self.preprocessing()
         color_group = self.get_color_group()
         text_group = self.get_text_group()
         recog_result = color_group & text_group
