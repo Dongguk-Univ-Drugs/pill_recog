@@ -8,6 +8,7 @@ RUN apt-get install -y git build-essential libopencv-dev python3 pip vim
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 RUN echo 'alias python="python3"' >> ~/.bashrc
-
+# easyocr cpu model download
+RUN easyocr -f app/test/images/image4.png  -l=en --gpu=False
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]

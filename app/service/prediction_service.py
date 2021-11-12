@@ -1,61 +1,93 @@
 # custom path
 import asyncio
 import cv2
-from service.load import Reference
-from service.preprocessing import Preprocessing
-
-# use EasyOCR
-import easyocr
-
+import numpy as np
+import drug_manager
+from preprocessing import *
+from OCR import READER
+from drug_enums import Shape
 
 # TODO; has to be Singleton
 class PredictionService:
-    def __init__(self):
-        """init from different classes
-        - Preprocessing
-        - Reference
-        """
-        self.ref = Reference()
-        self.preprocess = Preprocessing()
+    def __init__(self, img, is_upload=False):
+        # init src from bytes
+        if is_upload:
+            self.image = self.create_cv2_mode(img)
+        else:
+            self.image = img
+        self.shape = Shape.NotFound
 
-    async def get_color_group(self, img):
+    def preprocessing(self):
+        """
+            <pipeline>
+            1. convert gray
+            2. crop object area
+            3. crop by shape
+        """
+        self.pp_image = get_grayscale(self.image)
+        self.pp_image = get_object_area(self.pp_image)
+        self.crop_by_shape(self.pp_image)
+
+    def create_cv2_mode(self, uploaded_byte) -> np.ndarray:
+        """make uploaded file to be useful for opencv-python
+
+        Args:
+            uploaded_byte (UploadedFile): input image from client
+
+        Returns:
+            [numpy.ndarray]: the result of image with `numpy`
+        """
+        encoded_img = np.fromstring(uploaded_byte, dtype=np.uint8)
+        src = cv2.imdecode(encoded_img, cv2.IMREAD_COLOR)
+        return src
+
+    def get_prediction(self):
+        color_group = self.get_color_group()
+        text_group = self.get_text_group()
+        recog_result = color_group & text_group
+
+        result = []
+        base_URL = 'https://nedrug.mfds.go.kr/pbp/CCBBB01/getItemDetail?itemSeq='
+        for pid in recog_result:
+            temp = drug_manager.get_drug(pid)
+            temp['webviewURL'] = f"{base_URL}{pid}"
+            result.append(temp)
+        return result
+
+
+    def get_color_group(self):
         """use Foreground of image to distribute the group of color
 
         Args:
             img (numpy.ndarray): result data from Preprocessing.get_foreground
         """
-        redLow = (0, 60, 80)
-        redHigh = (45, 255, 255)
-        greenLow = (45, 15, 10)
-        greenHigh = (80, 255, 255)
-        blueLow = (90, 60, 70)
-        blueHigh = (115, 255, 255)
-        blackLow = (0, 0, 0)
-        blackHigh = (180, 255, 40)
-        whiteLow = (0, 0, 220)
-        whiteHigh = (180, 40, 255)
-
-        pp = self.preprocess
-        src = pp.create_cv2_mode(img)
-
-        # 색상
-        color_arr = []
-        pp.get_color(src, redLow, redHigh, "Red", color_arr)
-        pp.get_color(src, greenLow, greenHigh, "Green", color_arr)
-        pp.get_color(src, blueLow, blueHigh, "Blue", color_arr)
-        pp.get_color(src, blackLow, blackHigh, "Black", color_arr)
-        pp.get_color(src, whiteLow, whiteHigh, "White", color_arr)
+        color_group = []
+        for color, values in drug_manager.COLOR_RANGE.items():
+            low = values[0]
+            high = values[1]
+            if is_under_color_range(self.image, low, high):
+                color_group.append(color)
 
         # get pids from reference
         result = set()
-        for key in color_arr:
-            result.update(self.ref.color[key])
+        for color in color_group:
+            result.update(drug_manager.get_color_pid(color))
         return result
+
+    def crop_by_shape(self, image):
+        circles = get_circles(image)
+        if circles is not None:
+            self.shape = Shape.Circle
+            image = get_circle_area(image, circles)
+
+        return image
+            
 
     def get_shape(self, img):
         '''
         Place Jungin's code here
         '''
+
         pass
 
     def get_divider(self, img):
@@ -64,27 +96,19 @@ class PredictionService:
         '''
         pass
 
-    async def get_text(self, img):
+    def get_text(self):
+        results = READER.readtext(self.pp_image)
+        return results
+
+    def get_text_group(self):
         """get option from user and return value by its option
 
         Args:
             img (UploadedFile): the image data which has uploaded from client
             opt (int): the option will take whether to change the origin data to what
         """
-        pp = self.preprocess
-        ref = self.ref
-        # get img converted to cv2 mode
-        converted_img = pp.create_cv2_mode(img)
-        reader = easyocr.Reader(['en'], gpu=False)
-        results = reader.readtext(converted_img)
-
         def clean_text(text):
             return "".join([c if ord(c) < 128 else "" for c in text]).strip()
-
-        text_recog_result = ''
-        for bbox, text, prob in results:
-            text_recog_result += clean_text(text) + ' '
-        text_recog_result = text_recog_result.strip()
 
         def remove_exceptions(text):
             result = ''
@@ -93,15 +117,6 @@ class PredictionService:
                 elif t == ']': result += 'J'
                 else: result += t
             return result
-
-        # check in text ref
-        text_set = set()
-        temp = remove_exceptions(text_recog_result)
-        print(temp)
-
-        candidates = set()
-        similars = [['1', 'I', 'J'], ['5', 'S'], ['D', '0', 'O', 'Q'],
-                    ['4', 'A'], ['2', '-'], ['Y', 'V']]
 
         def get_candidates(text, i, similars, candidates):
             if i == len(text): return
@@ -113,10 +128,25 @@ class PredictionService:
                         get_candidates(converted, i + 1, similars, candidates)
                 get_candidates(text, i + 1, similars, candidates)
 
-        get_candidates(temp, 0, similars, candidates)
-        
-        for candidate in candidates:
-            if candidate in ref.text:
-                text_set = text_set.union(ref.text[candidate])
+        results = self.get_text()
 
-        return set(text_set)
+        text_recog_result = ''
+        for bbox, text, prob in results:
+            text_recog_result += clean_text(text) + ' '
+        text_recog_result = text_recog_result.strip()
+
+        # check in text ref
+        temp = remove_exceptions(text_recog_result)
+
+        candidates = set()
+        similars = [['1', 'I', 'J'], ['5', 'S'], ['D', '0', 'O', 'Q'],
+                    ['4', 'A'], ['2', '-'], ['Y', 'V']]
+
+        get_candidates(temp, 0, similars, candidates)
+        pids = set()
+        for candidate in candidates:
+            pid_set = drug_manager.get_text_pid(candidate)
+            if pid_set is not None:
+                pids.update(pid_set)
+
+        return pids
