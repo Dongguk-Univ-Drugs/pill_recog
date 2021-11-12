@@ -1,17 +1,21 @@
-<darknet 사용시>
-cpu=1, cv=1 을 이용하여 빌드하기 때문에 
-LIBSO=1 으로 해야 python 모듈 사용 가능
-
 Dockerfile.base 를 이용해 base image 생성
-
 
 docker build -t dgu_pill_recog .
 
 docker run -it --rm --volume="$(PWD):/app" dgu_pill_recog
 # docker run -it --rm --volume="$(PWD):/app" dgu_pill_recog bash bash로 들어가고 싶은 경우
-
-
-base 빌드시 pytesseract가 설치되지 않는 이슈가 있음.
+# 서버를 연결하고 싶은 경우 웹서버라 내부 포트는 80이므로 -p 옵션을 이용해서 설정해서 연결하면 됨,
+----------------------------------------------------------------------
+## Pipeline
+(현재는 모양은 원만 추출 가능)
+1. preprocessing
+1-1) convert to gray
+1-2) crop object area
+1-3) crop by shape
+... ()
+2. get pids by color
+3. get pids by text
+return 2 & 3
 
 ---
 # Usages
